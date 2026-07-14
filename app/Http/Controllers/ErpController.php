@@ -703,4 +703,61 @@ class ErpController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * 11. Profile Management.
+     */
+    public function profile()
+    {
+        return view('dashboard.profile');
+    }
+
+    /**
+     * Update Profile Information.
+     */
+    public function updateProfile(Request $request)
+    {
+        $user = auth()->user();
+        
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email,' . $user->id,
+        ]);
+
+        $user->update($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profile information updated successfully!'
+        ]);
+    }
+
+    /**
+     * Update Password.
+     */
+    public function updatePassword(Request $request)
+    {
+        $user = auth()->user();
+
+        $validated = $request->validate([
+            'current_password' => 'required|string',
+            'new_password' => 'required|string|min:8|confirmed',
+        ]);
+
+        if (!\Illuminate\Support\Facades\Hash::check($validated['current_password'], $user->password)) {
+            return response()->json([
+                'success' => false,
+                'errors' => ['current_password' => ['The provided current password does not match our records.']]
+            ], 422);
+        }
+
+        $user->update([
+            'password' => \Illuminate\Support\Facades\Hash::make($validated['new_password'])
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Password updated successfully!'
+        ]);
+    }
 }

@@ -59,5 +59,10 @@ Route::middleware(['auth'])->group(function () {
 
     // Reset demonstration utility
     Route::post('/reset-data', [ErpController::class, 'resetData'])->name('reset-data');
+
+    // 11. Profile Management
+    Route::get('/profile', [ErpController::class, 'profile'])->name('profile');
+    Route::post('/profile/update', [ErpController::class, 'updateProfile'])->name('profile.update');
+    Route::post('/profile/password', [ErpController::class, 'updatePassword'])->name('profile.password');
 });
 

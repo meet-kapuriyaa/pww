@@ -489,4 +489,85 @@ class ErpFlowTest extends TestCase
         $this->assertEquals(450.00, $invoice->sgst); // 9%
         $this->assertEquals(5900.00, $invoice->total_amount);
     }
+
+    /**
+     * Test Profile views and settings rendering.
+     */
+    public function test_profile_settings_view()
+    {
+        $user = User::create([
+            'name' => 'Praful Patel',
+            'email' => 'praful@pww.com',
+            'password' => bcrypt('admin123'),
+            'role' => 'admin',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('profile'));
+        $response->assertStatus(200);
+        $response->assertSee('Profile Information');
+        $response->assertSee('Update Password');
+        $response->assertSee('Back to Panel');
+    }
+
+    /**
+     * Test AJAX profile details update.
+     */
+    public function test_ajax_profile_update()
+    {
+        $user = User::create([
+            'name' => 'Praful Patel',
+            'email' => 'praful@pww.com',
+            'password' => bcrypt('admin123'),
+            'role' => 'admin',
+        ]);
+
+        $response = $this->actingAs($user)->postJson(route('profile.update'), [
+            'name' => 'New Praful Name',
+            'email' => 'newemail@pww.com'
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true
+        ]);
+
+        $user->refresh();
+        $this->assertEquals('New Praful Name', $user->name);
+        $this->assertEquals('newemail@pww.com', $user->email);
+    }
+
+    /**
+     * Test AJAX password modification.
+     */
+    public function test_ajax_password_update()
+    {
+        $user = User::create([
+            'name' => 'Praful Patel',
+            'email' => 'praful@pww.com',
+            'password' => bcrypt('admin123'),
+            'role' => 'admin',
+        ]);
+
+        // Failed password change (wrong current)
+        $response = $this->actingAs($user)->postJson(route('profile.password'), [
+            'current_password' => 'wrongcurrent',
+            'new_password' => 'newpassword123',
+            'new_password_confirmation' => 'newpassword123',
+        ]);
+        $response->assertStatus(422);
+
+        // Success password change
+        $response = $this->actingAs($user)->postJson(route('profile.password'), [
+            'current_password' => 'admin123',
+            'new_password' => 'newpassword123',
+            'new_password_confirmation' => 'newpassword123',
+        ]);
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true
+        ]);
+
+        $user->refresh();
+        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('newpassword123', $user->password));
+    }
 }
