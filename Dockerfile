@@ -5,16 +5,12 @@ FROM node:20-slim AS node-builder
 
 WORKDIR /app
 
-# Copy package files first
 COPY package*.json ./
 
-# Install frontend dependencies
 RUN npm install
 
-# Copy project files
 COPY . .
 
-# Build Vite/Tailwind assets
 RUN npm run build
 
 
@@ -23,7 +19,6 @@ RUN npm run build
 # ==========================================================
 FROM php:8.2-apache
 
-# Install system dependencies and PHP extensions
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpng-dev \
     libjpeg62-turbo-dev \
@@ -43,10 +38,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Enable Apache rewrite for Laravel routes
+# Enable Laravel URL rewriting
 RUN a2enmod rewrite
 
-# Set Apache document root to Laravel public folder
+# Prevent "More than one MPM loaded"
+RUN a2dismod mpm_event mpm_worker || true \
+    && a2enmod mpm_prefork
+
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 
 RUN sed -ri \
@@ -57,25 +55,20 @@ RUN sed -ri \
 
 WORKDIR /var/www/html
 
-# Copy Laravel application
 COPY . .
 
-# Copy compiled frontend assets from Node stage
 COPY --from=node-builder /app/public/build ./public/build
 
-# Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
-# Install Laravel production dependencies
 RUN composer install \
     --no-dev \
     --optimize-autoloader \
     --no-interaction \
     --prefer-dist
 
-# Create required Laravel folders and set permissions
 RUN mkdir -p \
     storage/framework/cache \
     storage/framework/sessions \
@@ -85,7 +78,6 @@ RUN mkdir -p \
     && chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
-# Copy Railway/Laravel entrypoint
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
