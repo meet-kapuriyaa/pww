@@ -1,0 +1,33 @@
+# ==========================================================
+# Render Blueprint Specification for PWW ERP
+# ==========================================================
+services:
+  - type: web
+    name: pww-erp
+    env: docker
+    plan: free
+    branch: main
+    envVars:
+      # Laravel Core Configurations
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_LOG
+        value: daily
+      - key: APP_KEY
+        sync: false # Set this in Render's dashboard (e.g. run 'php artisan key:generate' locally)
+      
+      # Database Configurations (MySQL connection)
+      - key: DB_CONNECTION
+        value: mysql
+      - key: DB_HOST
+        sync: false # Enter your external MySQL host (e.g. Aiven, Clever Cloud, or PlanetScale)
+      - key: DB_PORT
+        value: "3306"
+      - key: DB_DATABASE
+        value: pww
+      - key: DB_USERNAME
+        sync: false # Enter your database user
+      - key: DB_PASSWORD
+        sync: false # Enter your database password
