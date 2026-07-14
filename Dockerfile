@@ -5,21 +5,21 @@ FROM node:20-slim AS node-builder
 
 WORKDIR /app
 
-# Copy package files first for better Docker caching
+# Copy package files first
 COPY package*.json ./
 
-# Use npm ci when package-lock.json exists
-RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
+# Install frontend dependencies
+RUN npm install
 
-# Copy the complete Laravel project
+# Copy project files
 COPY . .
 
-# Build Vite frontend assets
+# Build Vite/Tailwind assets
 RUN npm run build
 
 
 # ==========================================================
-# Stage 2: Compile PHP Dependencies and Run Production Server
+# Stage 2: Laravel PHP + Apache Production Server
 # ==========================================================
 FROM php:8.2-apache
 
@@ -43,10 +43,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Enable Apache rewrite module for Laravel routes
+# Enable Apache rewrite for Laravel routes
 RUN a2enmod rewrite
 
-# Configure Apache document root to Laravel public directory
+# Set Apache document root to Laravel public folder
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 
 RUN sed -ri \
@@ -57,10 +57,10 @@ RUN sed -ri \
 
 WORKDIR /var/www/html
 
-# Copy Laravel application source
+# Copy Laravel application
 COPY . .
 
-# Copy compiled Vite assets from Node stage
+# Copy compiled frontend assets from Node stage
 COPY --from=node-builder /app/public/build ./public/build
 
 # Install Composer
@@ -68,14 +68,16 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
+# Install Laravel production dependencies
 RUN composer install \
     --no-dev \
     --optimize-autoloader \
     --no-interaction \
     --prefer-dist
 
-# Create required Laravel directories and permissions
-RUN mkdir -p storage/framework/cache \
+# Create required Laravel folders and set permissions
+RUN mkdir -p \
+    storage/framework/cache \
     storage/framework/sessions \
     storage/framework/views \
     storage/logs \
@@ -83,7 +85,7 @@ RUN mkdir -p storage/framework/cache \
     && chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
-# Copy the deployment entrypoint script
+# Copy Railway/Laravel entrypoint
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
