@@ -19,6 +19,7 @@ RUN npm run build
 # ==========================================================
 FROM php:8.2-apache
 
+# Install system libraries and PHP extensions
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpng-dev \
     libjpeg62-turbo-dev \
@@ -38,37 +39,47 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+# Remove every enabled Apache MPM module
+RUN rm -f /etc/apache2/mods-enabled/mpm_*.load \
+    /etc/apache2/mods-enabled/mpm_*.conf
+
+# Enable only prefork MPM, required by mod_php
+RUN ln -s /etc/apache2/mods-available/mpm_prefork.load \
+    /etc/apache2/mods-enabled/mpm_prefork.load \
+    && ln -s /etc/apache2/mods-available/mpm_prefork.conf \
+    /etc/apache2/mods-enabled/mpm_prefork.conf
+
 # Enable Laravel URL rewriting
 RUN a2enmod rewrite
 
-# Prevent "More than one MPM loaded"
-RUN a2dismod mpm_event mpm_worker || true \
-    && a2enmod mpm_prefork
-
+# Set Apache document root to Laravel public directory
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 
 RUN sed -ri \
     -e "s!/var/www/html!${APACHE_DOCUMENT_ROOT}!g" \
-    /etc/apache2/sites-available/*.conf \
-    /etc/apache2/apache2.conf \
-    /etc/apache2/conf-available/*.conf
+    /etc/apache2/sites-available/*.conf
 
 WORKDIR /var/www/html
 
+# Copy Laravel project
 COPY . .
 
+# Copy frontend production build
 COPY --from=node-builder /app/public/build ./public/build
 
+# Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
+# Install Laravel PHP dependencies
 RUN composer install \
     --no-dev \
     --optimize-autoloader \
     --no-interaction \
     --prefer-dist
 
+# Create Laravel runtime directories and permissions
 RUN mkdir -p \
     storage/framework/cache \
     storage/framework/sessions \
@@ -78,6 +89,11 @@ RUN mkdir -p \
     && chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
+# Verify only prefork MPM is loaded
+RUN apache2ctl -M | grep mpm_prefork_module \
+    && apache2ctl configtest
+
+# Add startup script
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
