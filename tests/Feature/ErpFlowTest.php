@@ -570,4 +570,103 @@ class ErpFlowTest extends TestCase
         $user->refresh();
         $this->assertTrue(\Illuminate\Support\Facades\Hash::check('newpassword123', $user->password));
     }
+
+    /**
+     * Test AJAX mark invoice as paid.
+     */
+    public function test_ajax_pay_invoice()
+    {
+        $user = User::create([
+            'name' => 'Praful Patel',
+            'email' => 'praful@pww.com',
+            'password' => bcrypt('admin123'),
+            'role' => 'admin',
+        ]);
+
+        $invoice = Invoice::create([
+            'invoice_number' => 'INV-PAYTEST-999',
+            'total_taxable_value' => 1000.00,
+            'cgst' => 90.00,
+            'sgst' => 90.00,
+            'igst' => 0.00,
+            'total_amount' => 1180.00,
+            'payment_status' => 'unpaid',
+            'due_date' => Carbon::now()->addDays(30)->toDateString(),
+        ]);
+
+        $response = $this->actingAs($user)->postJson(route('invoice.pay', $invoice->id));
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true
+        ]);
+
+        $invoice->refresh();
+        $this->assertEquals('paid', $invoice->payment_status);
+        $this->assertEquals(1180.00, $invoice->paid_amount);
+    }
+
+    /**
+     * Test Invoice printable tax details sheet rendering.
+     */
+    public function test_invoice_print_rendering()
+    {
+        $user = User::create([
+            'name' => 'Praful Patel',
+            'email' => 'praful@pww.com',
+            'password' => bcrypt('admin123'),
+            'role' => 'admin',
+        ]);
+
+        $client = Client::create([
+            'company_name' => 'Balaji Wafers',
+        ]);
+
+        $plant = ClientPlant::create([
+            'client_id' => $client->id,
+            'plant_name' => 'Rajkot plant',
+            'state' => 'Gujarat',
+        ]);
+
+        $good = FinishedGood::create([
+            'product_name' => 'Special Rack X',
+            'sku' => 'SRX-99',
+            'current_stock' => 10,
+            'selling_price' => 500,
+        ]);
+
+        $challan = DeliveryChallan::create([
+            'client_id' => $client->id,
+            'plant_id' => $plant->id,
+            'challan_number' => 'DC-PRINT-TEST-1',
+            'dispatch_date' => Carbon::now()->toDateString(),
+            'status' => 'invoiced',
+        ]);
+
+        DeliveryChallanItem::create([
+            'delivery_challan_id' => $challan->id,
+            'finished_good_id' => $good->id,
+            'quantity' => 5,
+            'unit_price' => 500.00,
+        ]);
+
+        $invoice = Invoice::create([
+            'delivery_challan_id' => $challan->id,
+            'invoice_number' => 'INV-PRINTTEST-999',
+            'total_taxable_value' => 2500.00,
+            'cgst' => 225.00,
+            'sgst' => 225.00,
+            'igst' => 0.00,
+            'total_amount' => 2950.00,
+            'payment_status' => 'unpaid',
+            'due_date' => Carbon::now()->addDays(30)->toDateString(),
+        ]);
+
+        $response = $this->actingAs($user)->get(route('invoice.print', $invoice->id));
+        $response->assertStatus(200);
+        $response->assertSee('INV-PRINTTEST-999');
+        $response->assertSee('Balaji Wafers');
+        $response->assertSee('Rajkot plant');
+        $response->assertSee('Special Rack X');
+        $response->assertSee('SRX-99');
+    }
 }

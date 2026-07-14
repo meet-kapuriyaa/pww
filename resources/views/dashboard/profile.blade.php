@@ -24,7 +24,7 @@
                 <h2 class="text-xl font-bold text-slate-800">Profile Information</h2>
                 <p class="text-xs text-slate-400 mt-1 mb-6">Update your account's profile information and email address.</p>
                 
-                <form action="{{ route('profile.update') }}" method="POST" class="ajax-form space-y-4">
+                <form action="{{ route('profile.update') }}" method="POST" class="ajax-form no-reset space-y-4">
                     @csrf
                     <div>
                         <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Name</label>
@@ -53,7 +53,7 @@
                 <h2 class="text-xl font-bold text-slate-800">Update Password</h2>
                 <p class="text-xs text-slate-400 mt-1 mb-6">Ensure your account is using a long, random password to stay secure.</p>
                 
-                <form action="{{ route('profile.password') }}" method="POST" class="ajax-form space-y-4">
+                <form action="{{ route('profile.password') }}" method="POST" class="ajax-form no-reset space-y-4">
                     @csrf
                     <div>
                         <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Current Password</label>

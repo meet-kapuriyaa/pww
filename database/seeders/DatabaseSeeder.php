@@ -28,8 +28,8 @@ class DatabaseSeeder extends Seeder
     {
         // 1. Create Core Users
         $adminUser = User::create([
-            'name' => 'Praful Patel',
-            'email' => 'praful@pww.com',
+            'name' => 'hardik  vekariya',
+            'email' => 'pww@example.com',
             'password' => Hash::make('admin123'),
             'role' => 'admin',
             'status' => 'active',

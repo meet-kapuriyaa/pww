@@ -7,7 +7,7 @@ use App\Http\Controllers\ErpController;
 // Authentication routes
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+Route::match(['get', 'post'], '/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Gated ERP routes
 Route::middleware(['auth'])->group(function () {
@@ -44,6 +44,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/invoices', [ErpController::class, 'invoices'])->name('invoices');
     Route::post('/invoices', [ErpController::class, 'createInvoice'])->name('invoice.create');
     Route::post('/invoices/generate', [ErpController::class, 'generateCustomInvoice'])->name('invoice.generate');
+    Route::post('/invoices/{id}/pay', [ErpController::class, 'payInvoice'])->name('invoice.pay');
+    Route::get('/invoices/{id}/print', [ErpController::class, 'printInvoice'])->name('invoice.print');
 
     // 8. Employees Directory
     Route::get('/employees', [ErpController::class, 'employees'])->name('employees');

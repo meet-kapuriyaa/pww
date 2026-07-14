@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PWW ERP - Secure Authentication</title>
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,15 +25,8 @@
         
         <!-- Logo and Heading -->
         <div class="text-center space-y-4 flex flex-col items-center">
-            <!-- P-V-W interlocking SVG Logo -->
-            <svg class="h-16 w-auto" viewBox="0 0 500 240" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <!-- P -->
-                <path d="M40 30h110c40 0 70 20 70 60s-30 60-70 60H90v60H40V30zm50 80h60c15 0 25-8 25-20s-10-20-25-20H90v40z" fill="#1E73BE"/>
-                <!-- Gray interlocking V accent -->
-                <path d="M120 85l60 90-25 40-60-90 25-40z" fill="#707A8A" opacity="0.9"/>
-                <!-- W -->
-                <path d="M185 30l35 180h40l25-110 25 110h40l35-180h-45l-20 115-25-115H250l-25 115-20-115h-45z" fill="#1E73BE"/>
-            </svg>
+            <!-- PWW Brand Image Logo -->
+            <img class="h-16 w-16 object-contain rounded-2xl border border-slate-100 shadow-sm" src="{{ asset('logo.jpg') }}" alt="PWW Logo">
             <div>
                 <h1 class="text-2xl font-extrabold text-slate-800 tracking-tight">Praful Welding Works</h1>
                 <p class="text-sm text-slate-500 font-semibold uppercase tracking-wider mt-1">ERP Secure Login Portal</p>
@@ -47,7 +41,7 @@
             @csrf
             <div>
                 <label for="email" class="block text-xs font-bold text-slate-600 uppercase mb-1">Corporate Email Address</label>
-                <input type="email" id="email" name="email" required placeholder="e.g. praful@pww.com"
+                <input type="email" id="email" name="email" required placeholder="e.g. pww@example.com"
                        class="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-700 transition">
             </div>
 
@@ -61,7 +55,6 @@
                 <label class="flex items-center text-slate-500 font-medium">
                     <input type="checkbox" name="remember" class="mr-1.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"> Remember this device
                 </label>
-                <span class="text-slate-400">Default: admin123</span>
             </div>
 
             <button type="submit" id="submitBtn"

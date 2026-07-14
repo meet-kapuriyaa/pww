@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'PWW ERP') - Praful Welding Works</title>
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -31,18 +32,11 @@
     <aside class="w-64 bg-white border-r border-slate-200 flex flex-col fixed h-full z-30 shadow-sm">
         <!-- Sidebar Brand Header -->
         <div class="px-6 py-5 border-b border-slate-100 flex items-center space-x-3 bg-slate-50/50">
-            <!-- P-V-W interlocking SVG Logo -->
-            <svg class="h-10 w-auto flex-shrink-0" viewBox="0 0 500 240" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <!-- P -->
-                <path d="M40 30h110c40 0 70 20 70 60s-30 60-70 60H90v60H40V30zm50 80h60c15 0 25-8 25-20s-10-20-25-20H90v40z" fill="#1E73BE"/>
-                <!-- Gray interlocking V accent -->
-                <path d="M120 85l60 90-25 40-60-90 25-40z" fill="#707A8A" opacity="0.9"/>
-                <!-- W -->
-                <path d="M185 30l35 180h40l25-110 25 110h40l35-180h-45l-20 115-25-115H250l-25 115-20-115h-45z" fill="#1E73BE"/>
-            </svg>
-            <div class="flex flex-col">
-                <span class="text-sm font-black tracking-tight text-slate-800 leading-none">Praful Welding</span>
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Works ERP</span>
+            <!-- PWW Brand Image Logo -->
+            <img class="h-10 w-10 object-contain rounded-lg flex-shrink-0 border border-slate-100" src="{{ asset('logo.jpg') }}" alt="PWW Logo">
+            <div class="flex flex-col min-w-0">
+                <span class="text-xs font-black tracking-tight text-slate-800 leading-none whitespace-nowrap">Praful Welding Works</span>
+                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">ERP Portal</span>
             </div>
         </div>
 
@@ -124,27 +118,24 @@
 
         <!-- Sidebar User Profile & Logout -->
         <div class="p-4 border-t border-slate-100 bg-slate-50/50 flex flex-col space-y-2">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <div class="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold uppercase">
+            <a href="{{ route('profile') }}" class="flex items-center justify-between hover:bg-slate-100/80 p-2 rounded-xl transition duration-150 group">
+                <div class="flex items-center space-x-3 min-w-0">
+                    <div class="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold uppercase group-hover:bg-blue-200 transition">
                         {{ substr(Auth::user()->name ?? 'P', 0, 1) }}
                     </div>
                     <div class="flex flex-col min-w-0">
-                        <span class="text-sm font-bold text-slate-800 truncate leading-none">{{ Auth::user()->name ?? 'Praful Patel' }}</span>
+                        <span class="text-sm font-bold text-slate-800 truncate leading-none group-hover:text-blue-700 transition">{{ Auth::user()->name ?? 'Praful Patel' }}</span>
                         <span class="text-[10px] font-semibold text-slate-400 capitalize mt-1">{{ Auth::user()->role ?? 'Staff' }}</span>
                     </div>
                 </div>
-                <a href="{{ route('profile') }}" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition" title="Edit Profile">
+                <div class="text-slate-400 group-hover:text-blue-600 transition">
                     <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                </a>
-            </div>
-            <form action="{{ route('logout') }}" method="POST" class="w-full">
-                @csrf
-                <button type="submit" class="w-full flex items-center justify-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-100 transition duration-150">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                    <span>Sign Out Account</span>
-                </button>
-            </form>
+                </div>
+            </a>
+            <a href="{{ route('logout') }}" class="w-full flex items-center justify-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-100 transition duration-150">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                <span>Sign Out Account</span>
+            </a>
         </div>
     </aside>
 
@@ -222,12 +213,15 @@
                 
                 if (response.ok) {
                     showToast('success', responseData.message || 'Operation completed successfully!');
-                    form.reset();
+                    
+                    if (!form.classList.contains('no-reset')) {
+                        form.reset();
+                    }
                     
                     // Reload dynamic elements or reload page smoothly
                     setTimeout(() => {
                         window.location.reload();
-                    }, 1200);
+                    }, 800);
                 } else {
                     const errors = responseData.errors 
                         ? (Array.isArray(responseData.errors) ? responseData.errors : Object.values(responseData.errors).flat())

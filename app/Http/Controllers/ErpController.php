@@ -481,8 +481,27 @@ class ErpController extends Controller
 
                 $total = $taxable + $cgst + $sgst + $igst;
 
-                return Invoice::create([
-                    'delivery_challan_id' => null, // custom direct
+                // Create dummy delivery challan for manual items
+                $challan = \App\Models\DeliveryChallan::create([
+                    'client_id' => $plant->client_id,
+                    'plant_id' => $plant->id,
+                    'challan_number' => 'DC-M-' . $validated['invoice_number'],
+                    'dispatch_date' => now(),
+                    'status' => 'invoiced',
+                ]);
+
+                // Save items
+                foreach ($validated['finished_good_ids'] as $idx => $fgId) {
+                    \App\Models\DeliveryChallanItem::create([
+                        'delivery_challan_id' => $challan->id,
+                        'finished_good_id' => $fgId,
+                        'quantity' => $validated['quantities'][$idx],
+                        'unit_price' => $validated['unit_prices'][$idx],
+                    ]);
+                }
+
+                $invoice = Invoice::create([
+                    'delivery_challan_id' => $challan->id,
                     'invoice_number' => $validated['invoice_number'],
                     'total_taxable_value' => $taxable,
                     'cgst' => $cgst,
@@ -493,6 +512,10 @@ class ErpController extends Controller
                     'paid_amount' => 0.00,
                     'due_date' => $validated['due_date'],
                 ]);
+
+                $challan->update(['invoice_id' => $invoice->id]);
+
+                return $invoice;
             });
 
             return response()->json([
@@ -506,6 +529,81 @@ class ErpController extends Controller
                 'errors' => ['Failed to log invoice: ' . $e->getMessage()]
             ], 500);
         }
+    }
+
+    /**
+     * Mark an invoice as Paid (AJAX).
+     */
+    public function payInvoice($id)
+    {
+        try {
+            $invoice = Invoice::findOrFail($id);
+            $invoice->update([
+                'payment_status' => 'paid',
+                'paid_amount' => $invoice->total_amount,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Invoice '{$invoice->invoice_number}' marked as fully paid successfully!"
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'errors' => ['Failed to update payment status: ' . $e->getMessage()]
+            ], 500);
+        }
+    }
+
+    /**
+     * Print / Save PDF representation of the invoice.
+     */
+    public function printInvoice($id)
+    {
+        $invoice = Invoice::with([
+            'deliveryChallan.client', 
+            'deliveryChallan.plant', 
+            'deliveryChallan.items.finishedGood',
+            'deliveryChallans.plant',
+            'deliveryChallans.items.finishedGood'
+        ])->findOrFail($id);
+
+        // Deduce details
+        $primaryChallan = $invoice->deliveryChallan;
+        $client = $primaryChallan ? $primaryChallan->client : null;
+        $plant = $primaryChallan ? $primaryChallan->plant : null;
+
+        // If client is still null, look in aggregated challans
+        if (!$client && $invoice->deliveryChallans->isNotEmpty()) {
+            $first = $invoice->deliveryChallans->first();
+            $client = $first->client;
+            $plant = $first->plant;
+        }
+
+        // Collect all items across all linked challans
+        $items = collect();
+        if ($primaryChallan) {
+            $items = $items->concat($primaryChallan->items);
+        }
+        foreach ($invoice->deliveryChallans as $dc) {
+            if ($dc->id !== ($primaryChallan->id ?? null)) {
+                $items = $items->concat($dc->items);
+            }
+        }
+
+        // Group items to unique finishedGood to sum quantities and prices
+        $groupedItems = $items->groupBy('finished_good_id')->map(function($group) {
+            $firstItem = $group->first();
+            return (object)[
+                'product_name' => $firstItem->finishedGood->product_name ?? 'Custom Product',
+                'sku' => $firstItem->finishedGood->sku ?? 'N/A',
+                'quantity' => $group->sum('quantity'),
+                'unit_price' => $firstItem->unit_price,
+                'total' => $group->sum(function($item) { return $item->quantity * $item->unit_price; })
+            ];
+        });
+
+        return view('dashboard.invoice_print', compact('invoice', 'client', 'plant', 'groupedItems'));
     }
 
     /**
@@ -687,7 +785,7 @@ class ErpController extends Controller
             Artisan::call('migrate:fresh', ['--seed' => true, '--force' => true]);
             
             // Automatically log in the seed user to maintain session after migrate:fresh
-            $seedUser = User::where('email', 'praful@pww.com')->first();
+            $seedUser = User::where('email', 'pww@example.com')->first();
             if ($seedUser) {
                 auth()->login($seedUser);
             }

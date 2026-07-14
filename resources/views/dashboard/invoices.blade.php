@@ -42,6 +42,7 @@
                                 <th class="px-4 py-3 text-right text-xs font-bold text-slate-500 uppercase">IGST</th>
                                 <th class="px-4 py-3 text-right text-xs font-bold text-slate-500 uppercase">Total Amount</th>
                                 <th class="px-4 py-3 text-center text-xs font-bold text-slate-500 uppercase">Status</th>
+                                <th class="px-4 py-3 text-center text-xs font-bold text-slate-500 uppercase">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 bg-white">
@@ -81,6 +82,21 @@
                                                ($inv->payment_status === 'partially_paid' ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-rose-50 text-rose-700 border border-rose-200') }}">
                                             {{ $inv->payment_status }}
                                         </span>
+                                    </td>
+                                    <td class="px-4 py-3 text-center space-x-2 whitespace-nowrap">
+                                        <a href="{{ route('invoice.print', $inv->id) }}" target="_blank" 
+                                           class="inline-flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded text-xs font-bold transition shadow-xs">
+                                            <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                            PDF
+                                        </a>
+                                        @if ($inv->payment_status !== 'paid')
+                                            <form action="{{ route('invoice.pay', $inv->id) }}" method="POST" class="ajax-form inline-block">
+                                                @csrf
+                                                <button type="submit" class="bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 px-2.5 py-1 rounded text-xs font-bold transition shadow-xs">
+                                                    Mark Paid
+                                                </button>
+                                            </form>
+                                        @endif
                                     </td>
                                 </tr>
                             @endforeach
